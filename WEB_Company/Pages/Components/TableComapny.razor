@@ -1,0 +1,56 @@
+﻿@using Models_Company;
+@using WEB_Company.Services.Contracts;
+@inject ICompanyServices icomp
+@inject NavigationManager nmanajer
+@if (Items is null)
+{
+    <h1>Data is null</h1>
+}
+else
+{
+    <table class="table-bordered table table-light">
+           <thead>
+               <tr>
+                <th>Название</th>
+                <th>Уровень доверия</th>
+                <th>ЛПР</th>
+                <th>Комментарий</th>
+                <th>Дата создания</th>
+                <th>Дата изменения</th>
+                <th>Изменить</th>
+               </tr>
+           </thead>
+           <tbody>
+            @foreach (var item in Items.Reverse())
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Level</td>
+                    <td>@item.DecisionMakerId</td>
+                    <td>@item.Comment</td>
+                    <td>@item.CreationTime.ToShortDateString()</td>
+                    <td>@item.ModificationTime.ToShortDateString()</td>
+                    <td align="center">
+                     <div class="d-flex justify-content-center">
+                            <a href="company/edit/@item.Id" class="nav-link">
+                                <span class="oi oi-pencil" aria-hidden="true"></span>
+                            </a>
+                            <a href="" class="nav-link "  @onclick=@(async() =>{
+                                    var data = await icomp.DeleteById(item.Id);
+                                    if(data)  nmanajer.NavigateTo("company");      
+                                    }) >
+                                <span class="oi oi-trash" aria-hidden="true"></span>
+                            </a>
+                     </div>
+                    </td>
+                </tr>
+            }
+           </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<MCompany> Items { get; set; } = default!;
+
+}

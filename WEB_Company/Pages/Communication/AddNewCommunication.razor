@@ -1,0 +1,96 @@
+﻿@page "/communication/addnew"
+@using Models_Company
+@using static Models_Company.Communication;
+@inject WEB_Company.Services.Contracts.IComServices Icommunication
+@inject WEB_Company.Services.Contracts.ICompanyServices Icompany
+@inject WEB_Company.Services.Contracts.IContactServices Icontact
+
+@inject NavigationManager Nmanager
+
+
+<h3>Добавить новый</h3>
+
+<EditForm class="col-4" Model=@Getcomm>
+    <DataAnnotationsValidator />
+    @*    <ValidationSummary/>*@
+   
+    <div class="form-group mb-3">
+        <label class="form-label" for="@Getcomm.CompanyId">Компания</label>
+        <InputSelect @bind-Value=Getcomm.CompanyId class="form-control">
+            @if (mCompany!=null)
+            {
+                @foreach (var item in mCompany)
+                {
+                    <option value="@item.Id">@item.Name</option>
+                }
+            }
+        </InputSelect>
+        <ValidationMessage For="() => Getcomm.CompanyId" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@Getcomm.ContacId">Контакт</label>
+         <InputSelect @bind-Value=Getcomm.ContacId class="form-control">
+           @if (contact!=null)
+            { @foreach (var item in contact)
+                {
+                    <option value="@item.Id">@item.FullName</option>
+                }
+            }
+        </InputSelect>
+
+        <ValidationMessage For="() => Getcomm.ContacId" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="@Getcomm.Type">Тип связи</label>
+        <InputSelect @bind-Value=Getcomm.Type class="form-control">
+            @foreach (var item in Enum.GetValues(typeof(Communication.SelectType)))
+            {
+                <option value="@item">@item</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="() => Getcomm.Type" />
+    </div>
+   
+    <div class="form-group mb-3">
+        <label class="form-label" for="@Getcomm.PhoneNumber">Телефон</label>
+        <InputText @bind-Value=Getcomm.PhoneNumber class="form-control" id="PhoneNumber" />
+        <ValidationMessage For="() => Getcomm.PhoneNumber" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@Getcomm.Email">Телефон</label>
+        <input @bind=Getcomm.Email class="form-control" id="Email" />
+        <ValidationMessage For="() => Getcomm.Email" />
+    </div>
+    <div class="d-flex justify-content-start gap-3 ">
+        <input type="submit" @onclick="@CreateNewData" value="Добавить" class="btn btn-success text-white w-100" />
+        <input type="button" @onclick="@Cancel" value="Отменить" class="btn btn-dark text-white w-100" />
+    </div>
+</EditForm>
+
+
+
+@code {
+    Communication Getcomm = new();
+    IEnumerable<Contact> contact { get; set; } = default!;
+    IEnumerable<MCompany> mCompany { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+            contact = await Icontact.Getlist();
+            mCompany = await Icompany.Getlist();
+    }
+
+    protected async void CreateNewData()
+    {
+        var result = await Icommunication.InsertNew(Getcomm);
+        if (result)
+        {
+            Nmanager.NavigateTo("communication");
+        }
+    }
+    protected async void Cancel()
+    {
+        await Task.Run(() => Nmanager.NavigateTo("communication"));
+    }
+}

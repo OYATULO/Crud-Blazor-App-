@@ -1,0 +1,67 @@
+﻿@page "/company/edit/{Id:guid}"
+@using Models_Company
+@using System.Net;
+@inject WEB_Company.Services.Contracts.ICompanyServices Icompany
+@inject NavigationManager Nmanager
+
+<h3>Изменить</h3>
+<EditForm class="col-4" Model=@mCompany>
+    <DataAnnotationsValidator />
+    @*    <ValidationSummary/>*@
+    <div class="form-group mb-3">
+        <label class="form-label" for="@mCompany.Name">Название компания</label>
+        <InputText @bind-Value=mCompany.Name class="form-control" id="Name" />
+        <ValidationMessage For="() => mCompany.Name" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="@mCompany.Level">Уровень доверия</label>
+        <InputSelect @bind-Value=mCompany.Level class="form-control">
+            @foreach (var item in Enum.GetValues(typeof(MCompany.EnumType)))
+            {
+                <option value="@item">@item</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="() => mCompany.Level" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="@mCompany.DecisionMakerId">ЛПР</label>
+        <input type="text" @bind="mCompany.DecisionMakerId" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="@mCompany.Comment">Комментарий</label>
+        <InputTextArea rows="5" @bind-Value=mCompany.Comment class="form-control"></InputTextArea>
+        <ValidationMessage For="() => mCompany.Comment" />
+    </div>
+    <div class="d-flex justify-content-start gap-3 ">
+        <input type="submit" @onclick="@UpdateCompany" value="Сохранить" class="btn btn-success text-white w-100" />
+        <input type="button" @onclick="@Cancel" value="Отменить" class="btn btn-dark text-white w-100" />
+    </div>
+    <h1>@Message</h1>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; } = default!;
+
+    string? Message { get; set; }
+    MCompany mCompany = new();
+    Contact contact { get; set; } = default!;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        mCompany = await Task.Run(() => Icompany.GetById(Id));
+    }
+
+    protected async void UpdateCompany()
+    {
+        var result = await Icompany.UpdateById(mCompany);
+
+        if (result) Nmanager.NavigateTo("company");
+        else Message = "NOt Updated data";
+    }
+    protected async void Cancel()
+    {
+        await Task.Run(() => Nmanager.NavigateTo("company"));
+    }
+}

@@ -1,0 +1,98 @@
+﻿@page "/company"
+@using Models_Company;
+@using WEB_Company.Pages.Components
+@using WEB_Company.Services.Contracts;
+@inject ICompanyServices Icompany
+@inject NavigationManager nmanajer
+
+<div class="container-fluid ">
+    <h3>Компания !</h3>
+   
+   <div class="mb-2">
+
+        <div class="flex-column justify-content-between mb-2 d-flex flex-md-row gap-md-2">
+            <NavLink href="/company/addnew" class="text-decoration-none btn btn-primary">
+                <span class="oi oi-plus"></span>
+                добавить новый
+            </NavLink>
+         <div class="d-flex gap-2">
+                <input class="input-group-text" @bind=SearchText />
+                <a  @onclick=GetBySearch  class="btn btn-outline-primary">
+                    <span class="oi oi-map text-center"> Поиск</span>
+                </a>
+         </div>
+        </div>
+   </div>
+ <div class="overflow-auto">
+        @if (GetList is null)
+        {
+            <h1>Loading.....</h1>
+        }
+        else
+        {
+            <table class="table-bordered table table-light">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Уровень доверия</th>
+                        <th>ЛПР</th>
+                        <th>Комментарий</th>
+                        <th>Дата создания</th>
+                        <th>Дата изменения</th>
+                        <th>Изменить</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in GetList)
+                        {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>@item.Level</td>
+                            <td>@item.DecisionMakerId</td>
+                            <td>@item.Comment</td>
+                            <td>@item.CreationTime.ToShortDateString()</td>
+                            <td>@item.ModificationTime.ToShortDateString()</td>
+                            <td align="center">
+                                <div class="d-flex justify-content-center">
+                                    <a href="company/edit/@item.Id" class="nav-link">
+                                        <span class="oi oi-pencil" aria-hidden="true"></span>
+                                    </a>
+                                    <a href="" class="nav-link " @onclick=@(async()=>await OnDeleted(item.Id))>
+                                        <span class="oi oi-trash" aria-hidden="true"></span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+ </div>
+</div>
+
+@code {
+    public IEnumerable<MCompany> GetList { get; set; }=default!;
+
+    public string SearchText { get; set; } = string.Empty;
+
+    private IEnumerable<MCompany> ForSearch { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetList = await Icompany.Getlist();
+        ForSearch = GetList;
+    }
+    protected  async Task OnDeleted(Guid id)
+    {
+        var result =  await Icompany.DeleteById(id);
+        if (result)
+        {
+            nmanajer.NavigateTo("company");
+        }
+    }
+
+    public  void GetBySearch()=>GetList = GetBysearch(SearchText);
+    
+    public IEnumerable<MCompany> GetBysearch(string search) => ForSearch.Where(s => s.Name.Contains(search)).ToList();
+   
+}

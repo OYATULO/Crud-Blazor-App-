@@ -1,0 +1,121 @@
+﻿@page "/contact/edit/{Id:guid}"
+@using Models_Company
+@using System.Net;
+@inject WEB_Company.Services.Contracts.IContactServices Icontact
+@inject WEB_Company.Services.Contracts.ICompanyServices ICompany
+@inject NavigationManager Nmanager
+<h3>Изменить контакть</h3>
+
+<EditForm class="col-4" Model=@GetContact>
+    <DataAnnotationsValidator />
+    @*    <ValidationSummary/>*@
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.Surname">Фамилия</label>
+        <InputText @bind-Value=GetContact.Surname class="form-control" id="Surname" />
+        <ValidationMessage For="() => GetContact.Surname" />
+    </div> 
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.Name">Имя</label>
+        <InputText @bind-Value=GetContact.Name class="form-control" id="Name" />
+        <ValidationMessage For="() => GetContact.Name" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.MiddleName">Отчество</label>
+        <InputText @bind-Value=GetContact.MiddleName class="form-control" id="MiddleName" />
+        <ValidationMessage For="() => GetContact.MiddleName" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.CompanyId">Компания</label>
+         <InputSelect @bind-Value=GetContact.CompanyId  class="form-control">
+               @if (GetCompanylist!=null)
+        {
+            @foreach (var item in GetCompanylist)
+            {
+                <option value="@item.Id">@item.Name</option>
+            }
+            
+        }
+
+         </InputSelect>
+        <ValidationMessage For="() => GetContact.CompanyId" />
+    </div>
+    
+   @* <div class="mb-3">
+        <label class="form-label" for="@GetContact.Level">Уровень доверия</label>
+        <InputSelect @bind-Value=mCompany.Level class="form-control">
+            @foreach (var item in Enum.GetValues(typeof(MCompany.EnumType)))
+            {
+                <option value="@item">@item</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="() => mCompany.Level" />
+    </div>*@
+    <div class="mb-3">
+        <label class="form-label" for="@GetContact.IsDecisionMaker">ЛПР</label>
+        <input type="checkbox" id="@GetContact.Id" checked="@GetContact.IsDecisionMaker" @bind-value=GetContact.IsDecisionMaker  class="form-check" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.JobTitle">Должность</label>
+        <InputText @bind-Value=GetContact.JobTitle class="form-control" id="JobTitle" />
+        <ValidationMessage For="() => GetContact.JobTitle" />
+    </div>
+    <div class="d-flex justify-content-start gap-3 ">
+        <input type="submit" @onclick="@UpdateContact" value="Сохранить" class="btn btn-success text-white w-100" />
+        <input type="button" @onclick="@Cancel" value="Отменить" class="btn btn-primary text-white w-100" />
+    </div>
+    <h1>@Message</h1>
+</EditForm>
+@code {
+    [Parameter]
+    public Guid Id { get; set; } = default!;
+
+    string? Message { get; set; }
+    Contact GetContact = new();
+    Contact contact { get; set; } = default!;
+
+    private IEnumerable<MCompany> GetCompanylist { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetContact = await Task.Run(() => Icontact.GetById(Id));
+        GetCompanylist = await ICompany.Getlist();
+    }
+
+    protected async void UpdateContact()
+    {
+        try
+        {
+            var result = await Icontact.UpdateById(GetContact);
+
+            if (GetContact.IsDecisionMaker)
+            {
+                var before = GetCompanylist.First(x => x.Id == GetContact.CompanyId);
+
+                    var after = new MCompany
+                    {
+                        Id = before.Id,
+                        Name = before.Name,
+                        Comment = before.Comment,
+                        CreationTime = before.CreationTime,
+                        DecisionMakerId = GetContact.Id,
+                        Level = before.Level,
+                        ModificationTime = DateTime.Now
+                    };
+                if (await ICompany.UpdateById(after)) throw new Exception();
+                
+            }
+
+            if (result) Nmanager.NavigateTo("contact");
+            else Message = "Ошибка !!!";
+        }
+        catch (Exception)
+        {
+            Nmanager.NavigateTo("company");
+          
+        }
+    }
+    protected async void Cancel()
+    {
+        await Task.Run(() => Nmanager.NavigateTo("contact"));
+    }
+}

@@ -1,0 +1,84 @@
+﻿@page "/contact/addnew"
+@using Models_Company
+@using static Models_Company.Contact;
+@inject WEB_Company.Services.Contracts.IContactServices IContact
+@inject WEB_Company.Services.Contracts.ICompanyServices Icompany
+@inject NavigationManager Nmanager
+
+
+<h3>Добавть новый контакть</h3>
+
+<EditForm class="col-4" Model=@GetContact>
+    <DataAnnotationsValidator />
+    @*    <ValidationSummary/>*@
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.Surname">Фамилия</label>
+        <InputText @bind-Value=GetContact.Surname class="form-control" id="Surname" />
+        <ValidationMessage For="() => GetContact.Surname" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.Name">Имя</label>
+        <InputText @bind-Value=GetContact.Name class="form-control" id="Name" />
+        <ValidationMessage For="() => GetContact.Name" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.MiddleName">Отчество</label>
+        <input @bind=GetContact.MiddleName class="form-control" id="MiddleName" />
+        <ValidationMessage For="() => GetContact.MiddleName" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.CompanyId">Компания</label>
+        <InputSelect @bind-Value=GetContact.CompanyId class="form-control" >
+            @if (GetCompanies != null)
+            {
+                foreach (var item in GetCompanies)
+                {
+                    <option value="@item.Id">@item.Name</option>
+                }
+            }
+        </InputSelect>
+
+        <ValidationMessage For="() => GetContact.CompanyId" />
+    </div>
+   
+    <div class="mb-3">
+        <label class="form-label" for="@GetContact.IsDecisionMaker">ЛПР</label>
+        <InputCheckbox @bind-Value="GetContact.IsDecisionMaker" class="form-check" />
+        <ValidationMessage For="() => GetContact.IsDecisionMaker" />
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label" for="@GetContact.JobTitle">Должность</label>
+        <InputText @bind-Value=GetContact.JobTitle class="form-control" id="JobTitle" />
+        <ValidationMessage For="() => GetContact.JobTitle" />
+    </div>
+    <div class="d-flex justify-content-start gap-3 ">
+        <input type="submit" @onclick="@CreateNewData" value="Сохранить" class="btn btn-success text-white w-100" />
+        <input type="button" @onclick="@Cancel" value="Отменить" class="btn btn-primary text-white w-100" />
+    </div>
+</EditForm>
+
+
+
+@code {
+    Contact GetContact = new();
+    Contact contact { get; set; } = default!;
+    IEnumerable<MCompany> GetCompanies { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetCompanies = await Icompany.Getlist();    
+    }
+
+    protected async void CreateNewData()
+    {
+        var result = await IContact.InsertNew(GetContact);
+        if (result)
+        {
+            Nmanager.NavigateTo("contact");
+        }
+    }
+    protected async void Cancel()
+    {
+        await Task.Run(() => Nmanager.NavigateTo("contact"));
+    }
+}

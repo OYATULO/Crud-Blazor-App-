@@ -1,0 +1,109 @@
+﻿@page "/communication"
+@using Models_Company;
+@using WEB_Company.Pages.Components
+@using WEB_Company.Services.Contracts;
+@inject IComServices ICommunication
+@inject ICompanyServices ICompany
+@inject IContactServices IContact
+@inject NavigationManager nmanajer
+
+<div class="container-fluid ">
+    <h3>Коммуникация !</h3>
+
+    <div class="mb-2">
+
+        <div class="flex-column justify-content-between mb-2 d-flex flex-md-row gap-md-2">
+            <NavLink href="/communication/addnew" class="text-decoration-none btn btn-primary">
+                <span class="oi oi-plus"></span>
+                добавить новый
+            </NavLink>
+            <div class="d-flex gap-2">
+                <input class="input-group-text" @bind=SearchText />
+                <a @onclick=GetBySearch class="btn btn-outline-primary">
+                    <span class="oi oi-map text-center"> Поиск</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="overflow-auto">
+        @if (GetList is null)
+        {
+            <h1>Loading.....</h1>
+        }
+        else
+        {
+            <table class="table-bordered table table-light">
+                <thead>
+                    <tr>
+                        <th>КомпанияID</th>
+                        <th>КонтактьID</th>
+                        <th>Тип связи</th>
+                        <th>Телефон</th>
+                        <th>Email</th>
+                        <th>Изменить</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                      //var data = (from communication in ForSearch
+                      //              join company in Getcompanylist on communication.CompanyId equals company.Id
+                      //              join contact in GetContactlist on communication.ContacId equals contact.Id
+                      //               select new {company,contact,communication});
+                    }
+                    @foreach (var item in GetList)
+                    {
+                        <tr>
+                            <td>@item.CompanyId</td>
+                            <td>@item.ContacId</td>
+                            <td>@item.Type</td>
+                            <td>@item.Type</td>
+                            <td>@item.Email</td>
+                            <td align="center">
+                                <div class="d-flex justify-content-center">
+                                    <a href="communication/edit/@item.Id" class="nav-link">
+                                        <span class="oi oi-pencil" aria-hidden="true"></span>
+                                    </a>
+                                    <a href="" class="nav-link " @onclick=@(async()=>await OnDeleted(item.Id))>
+                                        <span class="oi oi-trash" aria-hidden="true"></span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    public IEnumerable<Communication> GetList { get; set; } = default!;
+
+    public string SearchText { get; set; } = string.Empty;
+
+    private IEnumerable<Communication> ForSearch { get; set; } = default!;
+
+    private IEnumerable<MCompany> Getcompanylist { get; set; } = default!;
+    private IEnumerable<Contact> GetContactlist { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetList = await ICommunication.Getlist();
+        ForSearch = GetList;
+        Getcompanylist = await ICompany.Getlist();
+        GetContactlist = await IContact.Getlist();
+    }
+    protected async Task OnDeleted(Guid id)
+    {
+        var result = await ICommunication.DeleteById(id);
+        if (result)
+        {
+            nmanajer.NavigateTo("communication");
+        }
+    }
+
+    public void GetBySearch() => GetList = GetBysearch(SearchText);
+
+    public IEnumerable<Communication> GetBysearch(string search) => ForSearch.Where(s => s.PhoneNumber.Contains(SearchText)).ToList();
+
+}
